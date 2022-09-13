@@ -1,17 +1,14 @@
 <Query Kind="Statements">
   <Connection>
-    <ID>54bf9502-9daf-4093-88e8-7177c12aaaaa</ID>
-    <NamingService>2</NamingService>
+    <ID>79560d8e-44cd-40a1-aebc-3aad61f84d6d</ID>
+    <NamingServiceVersion>2</NamingServiceVersion>
     <Persist>true</Persist>
-    <Driver Assembly="(internal)" PublicKeyToken="no-strong-name">LINQPad.Drivers.EFCore.DynamicDriver</Driver>
-    <AttachFileName>&lt;ApplicationData&gt;\LINQPad\ChinookDemoDb.sqlite</AttachFileName>
-    <DisplayName>Demo database (SQLite)</DisplayName>
-    <DriverData>
-      <PreserveNumeric1>true</PreserveNumeric1>
-      <EFProvider>Microsoft.EntityFrameworkCore.Sqlite</EFProvider>
-      <MapSQLiteDateTimes>true</MapSQLiteDateTimes>
-      <MapSQLiteBooleans>true</MapSQLiteBooleans>
-    </DriverData>
+    <Server>localhost</Server>
+    <AllowDateOnlyTimeOnly>true</AllowDateOnlyTimeOnly>
+    <SqlSecurity>true</SqlSecurity>
+    <UserName>sa</UserName>
+    <Password>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAcZEve3zq0E2vlF++MRiBogAAAAACAAAAAAADZgAAwAAAABAAAABawN30Ktl9FCEEhynvR+pqAAAAAASAAACgAAAAEAAAANIhDZuh2+RE8XoZ6S7Ry3MQAAAA1TsBddLfogQbjG7FNj5bVBQAAAB1vIyr8PrgenBapQAyutLEvzdUyQ==</Password>
+    <Database>Chinook</Database>
   </Connection>
 </Query>
 
@@ -21,7 +18,7 @@
 //		the Exoression environment
 //to display the results you need to .Dump() the varible
 //		holding the data result.
-//IMPORTANT!!! .Dumo() is a Linqpad Method. It is not a C# method.
+//IMPORTANT!!! .Dump() is a Linqpad Method. It is not a C# method.
 //Within the statement environment one can run ALL the queries 
 //		in one execution.
 var qsyntaxlist = from arowonacollection in Albums
