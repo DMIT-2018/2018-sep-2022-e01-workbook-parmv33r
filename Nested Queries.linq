@@ -76,6 +76,29 @@ void Main()
 							}
 						);
 	results.Dump();
+	
+	//list all the albums that are from 1990.
+	//display the album Title, and artist name
+	// for each album, displau its tracks.
+	
+	var albums = Albums
+					.Where(a => a.ReleaseYear == 1990)
+					.OrderBy(a => a.Title)
+					.Select(a =>
+								new 
+								{
+								
+								Title = a.Title,
+								Artist = a.Artist.Name,
+								Tracks = a.Tracks
+												.Select(a => new {
+													Songs = a.Name,
+													Genre = a.Genre.Name
+												})
+								
+								}
+					);
+	albums.Dump();
 }
 
 // You can define other methods, fields, classes and namespaces here

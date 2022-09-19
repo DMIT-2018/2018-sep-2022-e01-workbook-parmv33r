@@ -29,14 +29,14 @@ Albums
 	.Select(
 		
 		a => new 
-	{
-		
-		Title = a.Title,
-		Label = a.ReleaseLabel == null ? "Unknown" : a.ReleaseLabel,
-		Artist = a.Artist.Name
-		
-	})
-	.OrderBy(a => a.Label)
+			{
+				
+				Title = a.Title,
+				Label = a.ReleaseLabel == null ? "Unknown" : a.ReleaseLabel,
+				Artist = a.Artist.Name
+				
+			})
+			.OrderBy(a => a.Label)
 	
 	
 //List all albums showing the title, artist name, year and decade of release
