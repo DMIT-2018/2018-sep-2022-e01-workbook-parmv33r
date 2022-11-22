@@ -22,12 +22,12 @@
 
 @if (Model.HasFeedBack)
 {
-    <blockquote class="success">@Model.FeedBackMessage</blockquote>
+    <blockquote class="alert alert-success">@Model.FeedBackMessage</blockquote>
 }
 
 @if (Model.HasError)
 {
-    <blockquote class="error">
+    <div class="alert alert-danger">
         @Model.ErrorMessage
         <ul>
             @foreach (var detail in Model.ErrorDetails)
@@ -35,22 +35,27 @@
                 <li>@detail</li>
             }
         </ul>
-    </blockquote>
+    </div>
 }
 <section class="row">
     <div class="col-lg-6">
         <form method="post">
-        <label>
-            Search pattern
-           </label>
+            <label>
+                Search pattern
+            </label>
             <input class="form-control" type="text" asp-for="searchArg" />
-            <br/>
+            <div class="mt-2">
+
                 <input type="radio" asp-for="searchBy" value="Artist" />&nbsp;&nbsp;Artist
-            &nbsp;&nbsp;
-                <input  type="radio" asp-for="searchBy" value="Album" />&nbsp;&nbsp;Album
+                &nbsp;&nbsp;
+                <input type="radio" asp-for="searchBy" value="Album" />&nbsp;&nbsp;Album
                 <button class="btn btn-primary" type="submit" asp-page-handler="TrackSearch"
-               title="Fetch tracks">Tracks ?</button>
-        
+                        title="Fetch tracks">
+                    <i class="fa-solid fa-magnifying-glass"></i> Tracks
+                </button>
+            </div>
+
+
         </form>
         @if(!string.IsNullOrWhiteSpace(Model.searchArg)
              && !string.IsNullOrWhiteSpace(Model.searchBy))
@@ -79,9 +84,13 @@
                         {
                             <tr>
                                 <td>
-                                    @* code to demo a button on a table 
-                                        using a icon
+                                    @* code to demo a button on a table
+        using a icon
                                     *@
+                                    <form method="post">
+                                        <input type="hidden" value="@item.TrackId" asp-for="addtrackid" />
+                                        <button type="submit" title="Add this track" class="btn btn-success" asp-page-handler="AddTrack"><i class="fa-solid fa-plus"></i></button>
+                                    </form>
                                 </td>
                                 <td>@item.SongName</td>
                                 <td>@item.AlbumTitle</td>
@@ -123,17 +132,16 @@
                 Enter playlist name:
             </label>
                 <input class="form-control" type="text" asp-for="playlistname" />
-            <br />
-            <button class="btn btn-primary" type="submit" title="Retreive Playlist"
+            <button class="btn btn-primary mt-2" type="submit" title="Retreive Playlist"
                     asp-page-handler="Fetch">
                 Fetch List
             </button>&nbsp;&nbsp;
             @if(Model.qplaylistInfo != null &&
                 Model.qplaylistInfo.Count > 0)
                 {
-                    <button tye="submit" title="Remove tracks"
+                    <button class="btn btn-danger mt-2" type="submit" title="Remove tracks"
                             asp-page-handler="Remove"
-                            style="background-color:var(--danger-color)">
+                            >
                         Remove Tracks
                     </button>
                 }
@@ -141,7 +149,7 @@
              @if(Model.qplaylistInfo != null &&
                 Model.qplaylistInfo.Count > 0)
                 {
-                    <button tye="submit" title="Reorganize playlist"
+                    <button class="btn btn-primary mt-2" type="submit" title="Reorganize playlist"
                             asp-page-handler="ReOrg">
                         Re-Org Tracks
                     </button>
@@ -156,7 +164,7 @@
                 }
                 else
                 {
-                    <table>
+                    <table class="table">
                         <thead>
                             <tr>
                                 <th></th>
@@ -168,7 +176,76 @@
                         </thead>
 
                         <tbody>
-                           @* code to demo CQRS for a table display*@
+                            @* code to demo CQRS for a table display
+
+                            a) create an incoming control(hidden) that will act as an "unique index identifier"
+                            for each instance that will be created.
+
+                            <input type="hidden" name="commandmodelproperty name.Index"
+                            value="@instanceitem.uniqueidentifiyingproperty" />
+
+                            <input type="hidden" name="cplaylistinfo.Index"
+                            value="@item.TrackId" />
+
+                            b) for the display of the table on each property of the row instance, use the value of your unique
+                                index  identifier as an "{[Index]}" attach to the name of the field.
+
+                            <input type="text"
+                                name="cplaylistinfo[@item.TrackId].propertyname"
+                                value="@trackinput">
+
+                                ALL incoming data that belongs to the same"[index]" will be collected
+                                into the SAME instance row and placed into your command model List<T>
+
+                                NOTE: using this technique of name/value pair REPLACES the asp-for parameter
+
+                            *@
+
+                            @foreach(var item in Model.qplaylistInfo)
+                            {
+
+                                    @*
+                                        retain entered values non-query model fields (from the command collection)
+                                        to assit with error messages
+                                        setup local variables to hold the command data values
+                                        move any existing command collection data into the appropriate values
+                                        NOTE: WARNING. you MUST have an instance of your command collection (List<>)
+                                        to solve this, add a=new() to declareation of your command collection.
+                                        This will ensure a command data collection instance exsists even if empty
+*@
+                                bool selectedtrack = false;
+                                string? trackinput = null;
+                                var song = Model.cplaylistInfo.SingleOrDefault(x => x.TrackId == item.TrackId);
+                                if(song !=null)
+                                {
+                                    selectedtrack = song.SelectedTrack;
+                                    trackinput = song.TrackInput.ToString();
+                                }
+                                <tr>
+                                    <td>
+                                        <input type="hidden" name="cplaylistinfo.Index"
+                                               value="@item.TrackId" />
+                                        <input type="hidden" name="cplaylistinfo[@item.TrackId].TrackId"
+                                               value="@item.TrackId" />
+                                        <input type="checkbox" name="cplaylistinfo[@item.TrackId].SelectedTrack" checked="@selectedtrack"
+                                               value="true" />
+                                    </td>
+                                    <td>
+                                        <input type="hidden" name="cplaylistinfo[@item.TrackId].TrackNumber"
+                                               value="@item.TrackNumber" />
+                                        @item.TrackNumber
+                                    </td>
+                                    <td>
+                                        @item.SongName
+                                    </td>
+                                    <td>
+                                        @TimeSpan.FromMilliseconds(item.Milliseconds).ToString(@"mm\:ss");
+                                    </td>
+                                    <td>
+                                        <input type="text" name="cplaylistinfo[@item.TrackId].TrackInput" value="@trackinput" />
+                                    </td>
+                                </tr>
+                            }
                         </tbody>
                     </table>
                 }
