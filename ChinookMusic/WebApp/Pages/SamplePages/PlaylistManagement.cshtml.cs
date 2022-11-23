@@ -19,10 +19,10 @@ namespace WebApp.Pages.SamplePages
 
 
         public PlaylistManagementModel(TrackServices trackservices,
-                                PlaylistTrackServices _playlisttrackservices)
+                                PlaylistTrackServices playlisttrackservices)
         {
             _trackServices = trackservices;
-            _playlisttrackServices = _playlisttrackservices;
+            _playlisttrackServices = playlisttrackservices;
         }
         #endregion
 
@@ -37,6 +37,7 @@ namespace WebApp.Pages.SamplePages
         public bool HasFeedBack => !string.IsNullOrWhiteSpace(FeedBackMessage);
 
         //used to display any collection of errors on web page
+        //whether the errors are generated locally OR come from the class library servic methods
         public List<string> ErrorDetails { get; set; } = new();
 
         //PageModel local error list for collection 
@@ -64,15 +65,25 @@ namespace WebApp.Pages.SamplePages
 
         public List<PlaylistTrackInfo> qplaylistInfo { get; set; }
 
+        //this property will be tied to the INPUT fields of the webpage
+        //in this case, this list is tied to the table data elements for the playlist
+        // the = new(); is required to assist in retaining error handeling
         [BindProperty]
-        public List<PlaylistTrackTRX> cplaylistInfo { get; set; }
+        public List<PlaylistTrackTRX> cplaylistInfo { get; set; } = new();
 
+        //this property is tied to the form input element located on each
+        // of the rows of the track table
+        // it will hold the trackid one wish to attempt to add to the playlist
         [BindProperty]
         public int addtrackid { get; set; }
 
         public const string USERNAME = "HansenB";
+
         public void OnGet()
         {
+            //this method is executed everytime the page is called for the first time
+            //  OR
+            //whenever a Get request is made to the page. SUCH AS RedirectToPage()
             GetTrackInfo();
             GetPlaylist();
         }
@@ -115,6 +126,8 @@ namespace WebApp.Pages.SamplePages
                 {
                     throw new AggregateException(Errors);
                 }
+
+                //RedirectToPage() will cause on Get request to be issue
                 return RedirectToPage(new
                 {
                     searchBy = searchBy.Trim(),
@@ -143,10 +156,16 @@ namespace WebApp.Pages.SamplePages
         {
             try
             {
+                //if (string.IsNullOrWhiteSpace(playlistname))
+                //{
+                //    Errors.Add(new Exception("Enter a playlist name to fetch."));
+                //}
+
                 if (string.IsNullOrWhiteSpace(playlistname))
                 {
-                    throw new Exception("Enter a playlist name to fetch.");
+                    throw new Exception("Please enter a playlist selected to continue and then press fetch!");
                 }
+
                 return RedirectToPage(new
                 {
                     searchBy = string.IsNullOrWhiteSpace(searchBy) ? " " : searchBy.Trim(),
@@ -154,7 +173,8 @@ namespace WebApp.Pages.SamplePages
                     playlistname = playlistname.Trim()
                 });
             }
-            catch(Exception ex)
+           
+            catch (Exception ex)
             {
                 ErrorMessage = GetInnerException(ex).Message;
                 return Page();
@@ -170,8 +190,18 @@ namespace WebApp.Pages.SamplePages
                 {
                     throw new Exception("You need to have a playlist select first. Enter a playlist name and Fetch");
                 }
-               
+
                 // Add the code to add a track via the service.
+
+                //the date needed for your call has ALREADY been placed in your local
+                //  property by the use of [BindProperty] which is two way (output/input)
+                // once security is installed, you would be able to obtain usernae
+                // from the OS.
+
+                string username = USERNAME;
+
+                //cal your service sending in the expected data
+                _playlisttrackServices.PlaylistTrack_AddTrack(playlistname, username, addtrackid);
                 
                 FeedBackMessage = "adding the track";
                 return RedirectToPage(new
@@ -190,6 +220,10 @@ namespace WebApp.Pages.SamplePages
                     ErrorDetails.Add(error.Message);
 
                 }
+
+                //Since the OnGet() will NOT be called if there is a transaction
+                //      error, the catch MUST do the actions of the OnGet
+
                 GetTrackInfo();
                 GetPlaylist();
 
@@ -210,7 +244,25 @@ namespace WebApp.Pages.SamplePages
         {
             try
             {
-               //Add the code to process the list of tracks via the service.
+                //Add the code to process the list of tracks via the service.
+                if (string.IsNullOrWhiteSpace(playlistname))
+                {
+                    throw new Exception("Please enter a playlist selected to continue and then press fetch!");
+                }
+
+                int oneselection = cplaylistInfo
+                                        .Where(x => x.SelectedTrack == true)
+                                        .Count();
+
+                if(oneselection.Equals(0))
+                {
+                    throw new Exception("You need to select first atleast one track to delete before pressing remove.");
+
+                }
+
+                string username = USERNAME;
+
+                _playlisttrackServices.PlaylistTrack_RemoveTracks(playlistname, username, cplaylistInfo);
 
                 return RedirectToPage(new
                 {
@@ -242,6 +294,54 @@ namespace WebApp.Pages.SamplePages
                 return Page();
             }
 
+        }
+
+        public IActionResult OnPostReOrg()
+        {
+            try
+            {
+                //Add the code to process the list of tracks via the service.
+                if (string.IsNullOrWhiteSpace(playlistname))
+                {
+                    throw new Exception("Please enter a playlist selected to continue and then press fetch!");
+                }
+
+                string username = USERNAME;
+
+                _playlisttrackServices.PlaylistTrack_MoveTracks(playlistname, username, cplaylistInfo);
+
+                FeedBackMessage = "reorganized the tracks";
+
+
+                return RedirectToPage(new
+                {
+                    searchBy = string.IsNullOrWhiteSpace(searchBy) ? " " : searchBy.Trim(),
+                    searchArg = string.IsNullOrWhiteSpace(searchArg) ? " " : searchArg.Trim(),
+                    playlistname = playlistname
+                });
+            }
+            catch (AggregateException ex)
+            {
+
+                ErrorMessage = "Unable to process re org tracks";
+                foreach (var error in ex.InnerExceptions)
+                {
+                    ErrorDetails.Add(error.Message);
+
+                }
+                GetTrackInfo();
+                GetPlaylist();
+
+                return Page();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = GetInnerException(ex).Message;
+                GetTrackInfo();
+                GetPlaylist();
+
+                return Page();
+            }
         }
 
         private Exception GetInnerException(Exception ex)
